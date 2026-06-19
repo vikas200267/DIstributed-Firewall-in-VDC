@@ -1,0 +1,343 @@
+<?xml version="1.0"?>
+<!-- 
+  pfSense Configuration Backup
+  Project: Distributed Firewall VDC
+  Version: 2.7.x
+  Exported: 2025-04-15
+  
+  IMPORTANT: This is a sanitized configuration export.
+  Change all passwords before use in production.
+-->
+<pfsense>
+  <version>23.05.1</version>
+  <lastchange></lastchange>
+  <system>
+    <hostname>pfsense-vdc</hostname>
+    <domain>vdc.local</domain>
+    <dnsserver>192.168.10.20</dnsserver>
+    <timezone>UTC</timezone>
+    <timeservers>0.pool.ntp.org 1.pool.ntp.org</timeservers>
+    <webgui>
+      <protocol>https</protocol>
+      <ssl-certref>cert-mgmt</ssl-certref>
+      <port>443</port>
+      <max_procs>2</max_procs>
+      <loginautocomplete/>
+    </webgui>
+    <optimization>normal</optimization>
+    <maximumtableentries>400000</maximumtableentries>
+    <disablefilter></disablefilter>
+    <ssh>
+      <enabled>enabled</enabled>
+      <port>22</port>
+      <sshdkeyonly>true</sshdkeyonly>
+      <agentforwarding></agentforwarding>
+    </ssh>
+    <language>en_US</language>
+  </system>
+
+  <interfaces>
+    <!-- WAN Interface - connected to internet/NAT -->
+    <wan>
+      <enable></enable>
+      <if>em0</if>
+      <descr>WAN</descr>
+      <ipaddr>dhcp</ipaddr>
+      <ipaddrv6>dhcp6</ipaddrv6>
+      <dhcphostname></dhcphostname>
+      <alias-address></alias-address>
+      <alias-subnet>32</alias-subnet>
+      <dhcp6-ia-pd-len>0</dhcp6-ia-pd-len>
+      <blockpriv>on</blockpriv>
+      <blockbogons>on</blockbogons>
+    </wan>
+
+    <!-- LAN Interface - Management VLAN 10 -->
+    <lan>
+      <enable></enable>
+      <if>em1</if>
+      <descr>LAN-Management</descr>
+      <ipaddr>192.168.10.1</ipaddr>
+      <subnet>24</subnet>
+      <media></media>
+      <mediaopt></mediaopt>
+    </lan>
+
+    <!-- OPT1 - DMZ VLAN 20 -->
+    <opt1>
+      <enable></enable>
+      <if>em2</if>
+      <descr>DMZ</descr>
+      <ipaddr>192.168.20.1</ipaddr>
+      <subnet>24</subnet>
+    </opt1>
+
+    <!-- OPT2 - Database VLAN 30 -->
+    <opt2>
+      <enable></enable>
+      <if>em3</if>
+      <descr>Database</descr>
+      <ipaddr>192.168.30.1</ipaddr>
+      <subnet>24</subnet>
+    </opt2>
+
+    <!-- OPT3 - Workstation VLAN 40 -->
+    <opt3>
+      <enable></enable>
+      <if>em4</if>
+      <descr>Workstation</descr>
+      <ipaddr>192.168.40.1</ipaddr>
+      <subnet>24</subnet>
+    </opt3>
+
+    <!-- OPT4 - Monitoring VLAN 50 -->
+    <opt4>
+      <enable></enable>
+      <if>em5</if>
+      <descr>Monitoring</descr>
+      <ipaddr>192.168.50.1</ipaddr>
+      <subnet>24</subnet>
+    </opt4>
+  </interfaces>
+
+  <!-- FIREWALL RULES -->
+  <filter>
+    <rule>
+      <id>rule-edge-in-001</id>
+      <tracker>1000001</tracker>
+      <type>block</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <tag></tag>
+      <tagged></tagged>
+      <max></max>
+      <max-src-nodes></max-src-nodes>
+      <max-src-conn></max-src-conn>
+      <max-src-states></max-src-states>
+      <statetimeout></statetimeout>
+      <statetype>keep state</statetype>
+      <os></os>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <network>lan</network>
+      </destination>
+      <descr>EDGE-IN-001: Block all WAN to Management</descr>
+      <log></log>
+    </rule>
+
+    <rule>
+      <id>rule-edge-in-002</id>
+      <tracker>1000002</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <address>192.168.20.10</address>
+        <port>80</port>
+      </destination>
+      <descr>EDGE-IN-002: Allow HTTP to DMZ Web Server</descr>
+      <log></log>
+    </rule>
+
+    <rule>
+      <id>rule-edge-in-003</id>
+      <tracker>1000003</tracker>
+      <type>pass</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <address>192.168.20.10</address>
+        <port>443</port>
+      </destination>
+      <descr>EDGE-IN-003: Allow HTTPS to DMZ Web Server</descr>
+      <log></log>
+    </rule>
+
+    <rule>
+      <id>rule-edge-in-004</id>
+      <tracker>1000004</tracker>
+      <type>block</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <any></any>
+        <port>22</port>
+      </destination>
+      <descr>EDGE-IN-004: Block SSH from Internet</descr>
+      <log></log>
+    </rule>
+
+    <rule>
+      <id>rule-edge-in-005</id>
+      <tracker>1000005</tracker>
+      <type>block</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <any></any>
+        <port>3389</port>
+      </destination>
+      <descr>EDGE-IN-005: Block RDP from Internet</descr>
+      <log></log>
+    </rule>
+
+    <rule>
+      <id>rule-edge-in-006</id>
+      <tracker>1000006</tracker>
+      <type>block</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <any></any>
+        <port>445</port>
+      </destination>
+      <descr>EDGE-IN-006: Block SMB from Internet</descr>
+      <log></log>
+    </rule>
+
+    <!-- DMZ inter-VLAN rules -->
+    <rule>
+      <id>rule-dmz-out-001</id>
+      <tracker>2000001</tracker>
+      <type>pass</type>
+      <interface>opt1</interface>
+      <ipprotocol>inet</ipprotocol>
+      <protocol>tcp</protocol>
+      <source>
+        <network>opt1</network>
+      </source>
+      <destination>
+        <network>opt2</network>
+        <port>3306</port>
+      </destination>
+      <descr>DMZ-OUT-001: Allow MySQL from DMZ to Database</descr>
+      <log></log>
+    </rule>
+
+    <rule>
+      <id>rule-dmz-out-block</id>
+      <tracker>2000099</tracker>
+      <type>block</type>
+      <interface>opt1</interface>
+      <ipprotocol>inet</ipprotocol>
+      <source>
+        <network>opt1</network>
+      </source>
+      <destination>
+        <network>lan</network>
+      </destination>
+      <descr>DMZ-OUT-003: Block DMZ to Management</descr>
+      <log></log>
+    </rule>
+
+    <!-- Default deny -->
+    <rule>
+      <id>rule-default-deny</id>
+      <tracker>9999999</tracker>
+      <type>block</type>
+      <interface>wan</interface>
+      <ipprotocol>inet</ipprotocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <any></any>
+      </destination>
+      <descr>EDGE-IN-999: Default Deny All Inbound</descr>
+      <log></log>
+    </rule>
+  </filter>
+
+  <!-- NAT CONFIGURATION -->
+  <nat>
+    <outbound>
+      <mode>automatic</mode>
+    </outbound>
+  </nat>
+
+  <!-- DHCP SERVER -->
+  <dhcpd>
+    <lan>
+      <enable></enable>
+      <range>
+        <from>192.168.10.100</from>
+        <to>192.168.10.200</to>
+      </range>
+      <defaultleasetime>86400</defaultleasetime>
+      <maxleasetime>86400</maxleasetime>
+      <dnsserver>192.168.10.20</dnsserver>
+      <gateway>192.168.10.1</gateway>
+      <domain>vdc.local</domain>
+    </lan>
+    <opt3>
+      <enable></enable>
+      <range>
+        <from>192.168.40.100</from>
+        <to>192.168.40.200</to>
+      </range>
+      <defaultleasetime>86400</defaultleasetime>
+      <dnsserver>192.168.10.20</dnsserver>
+      <gateway>192.168.40.1</gateway>
+      <domain>vdc.local</domain>
+    </opt3>
+  </dhcpd>
+
+  <!-- SNMP FOR MONITORING -->
+  <snmpd>
+    <syslocation>VDC Lab</syslocation>
+    <syscontact>admin@vdc.local</syscontact>
+    <rocommunity>vdc-readonly-community</rocommunity>
+    <pollPort>161</pollPort>
+    <enable></enable>
+    <mibii></mibii>
+    <netgraph></netgraph>
+    <pf></pf>
+    <hostres></hostres>
+    <bindip>192.168.10.1</bindip>
+  </snmpd>
+
+  <!-- SYSLOG CONFIGURATION -->
+  <syslog>
+    <enable></enable>
+    <remoteserver>192.168.50.10</remoteserver>
+    <remoteserver2></remoteserver2>
+    <remoteserver3></remoteserver3>
+    <sourceip></sourceip>
+    <ipproto>ipv4</ipproto>
+    <remoteport>514</remoteport>
+    <filter></filter>
+    <dhcp></dhcp>
+    <auth></auth>
+    <portalauth></portalauth>
+    <vpn></vpn>
+    <dpinger></dpinger>
+    <routing></routing>
+    <resolver></resolver>
+    <ppp></ppp>
+    <firewall></firewall>
+    <system></system>
+  </syslog>
+
+</pfsense>

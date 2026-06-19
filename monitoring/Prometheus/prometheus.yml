@@ -1,0 +1,112 @@
+# =============================================================================
+# Prometheus Configuration
+# Distributed Firewall VDC Project
+# Version: 2.0.0
+# =============================================================================
+
+global:
+  scrape_interval: 30s          # Collect metrics every 30 seconds
+  evaluation_interval: 30s      # Evaluate rules every 30 seconds
+  scrape_timeout: 10s
+  external_labels:
+    project: 'distributed-firewall-vdc'
+    environment: 'lab'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+# Load alerting rules
+rule_files:
+  - 'vdc-alerts.yml'
+
+# =============================================================================
+# SCRAPE CONFIGURATIONS
+# =============================================================================
+
+scrape_configs:
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 60s
+
+  # Node Exporter - VDC VMs
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets:
+          - '192.168.10.20:9100'   # DNS Server
+          - '192.168.20.10:9100'   # Web Server
+          - '192.168.30.10:9100'   # DB Server
+          - '192.168.40.10:9100'   # Client VM
+          - '192.168.50.10:9100'   # Suricata IDS
+          - '192.168.50.20:9100'   # ELK Stack
+    labels:
+      environment: 'vdc-lab'
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+
+  # VDC Custom Monitoring Agent
+  - job_name: 'vdc-monitor'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    labels:
+      source: 'vdc-custom'
+
+  # pfSense via SNMP Exporter
+  - job_name: 'pfsense_snmp'
+    static_configs:
+      - targets: ['192.168.10.1']
+    metrics_path: '/snmp'
+    params:
+      auth: [public_v2]
+      module: [if_mib]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 'snmp-exporter:9116'
+    labels:
+      device: 'pfsense-edge'
+
+  # Suricata metrics via stats
+  - job_name: 'suricata'
+    static_configs:
+      - targets: ['192.168.50.10:9322']
+    metrics_path: '/metrics'
+    labels:
+      service: 'suricata-ids'
+
+  # Elasticsearch
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['192.168.50.20:9200']
+    metrics_path: '/_prometheus/metrics'
+    labels:
+      service: 'elasticsearch'
+
+  # ESXi hosts via VMware Exporter
+  - job_name: 'vmware_esxi'
+    static_configs:
+      - targets:
+          - '192.168.10.10'  # ESXi Host 1
+          - '192.168.10.11'  # ESXi Host 2
+    metrics_path: '/metrics'
+    params:
+      target:
+        - '192.168.10.10'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - target_label: __address__
+        replacement: 'vmware-exporter:9272'
+    labels:
+      device_type: 'esxi_host'

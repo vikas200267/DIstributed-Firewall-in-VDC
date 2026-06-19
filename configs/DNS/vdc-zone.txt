@@ -1,0 +1,89 @@
+; =============================================================================
+; VDC DNS Zone File
+; Zone: vdc.local
+; DNS Server: WinSrv-DNS-01 (192.168.10.20)
+; Project: Distributed Firewall VDC
+; Last Modified: 2025-04-15
+; =============================================================================
+
+$ORIGIN vdc.local.
+$TTL 3600
+
+; SOA Record
+@    IN    SOA    ns1.vdc.local. admin.vdc.local. (
+                  2025041501 ; Serial (YYYYMMDDnn)
+                  3600       ; Refresh (1 hour)
+                  900        ; Retry (15 min)
+                  604800     ; Expire (1 week)
+                  300        ; Negative TTL (5 min)
+                  )
+
+; Name Servers
+@    IN    NS     ns1.vdc.local.
+
+; =============================================================================
+; INFRASTRUCTURE - MANAGEMENT VLAN (192.168.10.0/24)
+; =============================================================================
+
+; DNS/NS Server itself
+ns1         IN    A      192.168.10.20
+dns01       IN    A      192.168.10.20
+
+; pfSense Edge Firewall
+gw          IN    A      192.168.10.1
+pfsense     IN    A      192.168.10.1
+firewall    IN    A      192.168.10.1
+
+; ESXi Hosts
+esxi01      IN    A      192.168.10.10
+esxi02      IN    A      192.168.10.11
+
+; =============================================================================
+; DMZ SEGMENT (192.168.20.0/24)
+; =============================================================================
+
+; Web Servers
+web01       IN    A      192.168.20.10
+www         IN    CNAME  web01.vdc.local.
+app01       IN    A      192.168.20.10
+
+; =============================================================================
+; DATABASE SEGMENT (192.168.30.0/24)
+; =============================================================================
+
+; Database Servers
+db01        IN    A      192.168.30.10
+mysql01     IN    A      192.168.30.10
+
+; =============================================================================
+; WORKSTATION SEGMENT (192.168.40.0/24)
+; =============================================================================
+
+; Client VMs
+ws01        IN    A      192.168.40.10
+ws02        IN    A      192.168.40.11
+client01    IN    A      192.168.40.10
+
+; =============================================================================
+; MONITORING SEGMENT (192.168.50.0/24)
+; =============================================================================
+
+; IDS/IPS Sensor
+ids01       IN    A      192.168.50.10
+suricata    IN    A      192.168.50.10
+
+; ELK Stack
+elk01       IN    A      192.168.50.20
+elastic     IN    A      192.168.50.20
+kibana      IN    CNAME  elk01.vdc.local.
+logstash    IN    CNAME  elk01.vdc.local.
+
+; Grafana
+grafana     IN    A      192.168.50.30
+monitor     IN    CNAME  grafana.vdc.local.
+
+; Prometheus
+prometheus  IN    A      192.168.50.40
+
+; Syslog Server
+syslog      IN    A      192.168.50.50

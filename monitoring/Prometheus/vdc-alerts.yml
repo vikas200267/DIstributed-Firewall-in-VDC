@@ -1,0 +1,140 @@
+# =============================================================================
+# Prometheus Alerting Rules - VDC Security Alerts
+# Project: Distributed Firewall VDC
+# =============================================================================
+
+groups:
+
+  # ============================================================
+  # AVAILABILITY ALERTS
+  # ============================================================
+  - name: vdc_availability
+    interval: 30s
+    rules:
+
+      - alert: VDCHostDown
+        expr: up{job="node_exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "VDC host is down: {{ $labels.instance }}"
+          description: "Host {{ $labels.instance }} has been unreachable for more than 2 minutes."
+          runbook: "Check VM power state and network connectivity"
+
+      - alert: PfSenseDown
+        expr: up{job="pfsense_snmp"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "pfSense Edge Firewall is DOWN"
+          description: "The pfSense edge firewall is unreachable. All traffic control may be compromised."
+
+      - alert: SuricataDown
+        expr: up{job="suricata"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "Suricata IDS/IPS is DOWN"
+          description: "Suricata is not responding. Intrusion detection is offline."
+
+      - alert: ELKDown
+        expr: up{job="elasticsearch"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          category: monitoring
+        annotations:
+          summary: "ELK Stack is DOWN"
+          description: "Elasticsearch is unreachable. Log aggregation is offline."
+
+  # ============================================================
+  # PERFORMANCE ALERTS
+  # ============================================================
+  - name: vdc_performance
+    rules:
+
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High CPU on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value | printf \"%.1f\" }}% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High memory on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | printf \"%.1f\" }}% on {{ $labels.instance }}"
+
+      - alert: DiskSpaceWarning
+        expr: |
+          (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "Disk space warning on {{ $labels.instance }}"
+          description: "Disk {{ $labels.mountpoint }} is {{ $value | printf \"%.1f\" }}% full"
+
+      - alert: DiskSpaceCritical
+        expr: |
+          (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 95
+        for: 5m
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: "CRITICAL disk space on {{ $labels.instance }}"
+          description: "Disk {{ $labels.mountpoint }} is {{ $value | printf \"%.1f\" }}% full - TAKE ACTION"
+
+  # ============================================================
+  # SECURITY ALERTS
+  # ============================================================
+  - name: vdc_security
+    rules:
+
+      - alert: HighIDSAlertRate
+        expr: rate(vdc_ids_alerts_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High IDS alert rate detected"
+          description: "Suricata is generating more than 10 alerts per second. Possible attack in progress."
+
+      - alert: LateralMovementDetected
+        expr: vdc_ids_alerts_total{signature="VDC LATERAL"} > 0
+        for: 0m
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "Lateral movement detected in VDC!"
+          description: "A lateral movement alert has been triggered. Investigate immediately."
+
+      - alert: FirewallBlockSpike
+        expr: rate(vdc_firewall_blocks_total[5m]) > 50
+        for: 1m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High firewall block rate"
+          description: "pfSense is blocking more than 50 connections per second. Possible DDoS or scan."

@@ -1,0 +1,93 @@
+# VMware ESXi Host 1 - Virtual Machine Configuration
+# Project: Distributed Firewall VDC
+# VM: ESXi-Host-01
+# Role: Primary hypervisor hosting DNS, Web, and Database VMs
+# =============================================================================
+
+.encoding = "UTF-8"
+config.version = "8"
+virtualHW.version = "21"
+virtualHW.productCompatibility = "hosted"
+
+# Basic VM Identity
+displayName = "ESXi-Host-01"
+guestOS = "vmkernel7"
+annotation = "VMware ESXi 7.0 U3 - VDC Host 1 | IP: 192.168.10.10"
+
+# CPU Configuration - Enable nested virtualization
+numvcpus = "4"
+cpuid.coresPerSocket = "4"
+vhv.enable = "TRUE"
+hypervisor.cpuid.v0 = "FALSE"
+msr.allow = "TRUE"
+
+# Memory Configuration
+memSize = "16384"
+mem.hotadd = "TRUE"
+
+# NVRAM
+nvram = "ESXi-Host-01.nvram"
+
+# Disk 0 - ESXi Boot/System
+scsi0.present = "TRUE"
+scsi0.virtualDev = "pvscsi"
+scsi0:0.present = "TRUE"
+scsi0:0.fileName = "ESXi-Host-01-disk1.vmdk"
+scsi0:0.deviceType = "scsi-hardDisk"
+scsi0:0.redo = ""
+
+# Network Adapter 1 - Management VLAN 10 (VMnet1)
+ethernet0.present = "TRUE"
+ethernet0.connectionType = "custom"
+ethernet0.vnet = "VMnet1"
+ethernet0.addressType = "generated"
+ethernet0.generatedAddressOffset = "0"
+ethernet0.pciSlotNumber = "32"
+ethernet0.virtualDev = "vmxnet3"
+ethernet0.linkStatePropagation.enable = "FALSE"
+
+# Network Adapter 2 - DMZ VLAN 20 (VMnet2)
+ethernet1.present = "TRUE"
+ethernet1.connectionType = "custom"
+ethernet1.vnet = "VMnet2"
+ethernet1.addressType = "generated"
+ethernet1.pciSlotNumber = "33"
+ethernet1.virtualDev = "vmxnet3"
+
+# Network Adapter 3 - Database VLAN 30 (VMnet3)
+ethernet2.present = "TRUE"
+ethernet2.connectionType = "custom"
+ethernet2.vnet = "VMnet3"
+ethernet2.addressType = "generated"
+ethernet2.pciSlotNumber = "34"
+ethernet2.virtualDev = "vmxnet3"
+
+# Boot Configuration
+bios.bootOrder = "hdd"
+bios640k.enable = "FALSE"
+
+# Tools Configuration
+toolScripts.afterPowerOn = "TRUE"
+toolScripts.afterResume = "TRUE"
+toolScripts.beforeSuspend = "TRUE"
+toolScripts.beforePowerOff = "TRUE"
+
+# USB
+usb.present = "TRUE"
+usb.vbusPresent = "TRUE"
+
+# Display
+svga.present = "TRUE"
+svga.numDisplays = "1"
+svga.autodetect = "TRUE"
+
+# Serial Port (for console access)
+serial0.present = "TRUE"
+serial0.fileType = "pipe"
+serial0.fileName = "\\\\.\\pipe\\ESXi-Host-01-serial0"
+serial0.pipe.endPoint = "server"
+serial0.tryNoRxLoss = "FALSE"
+
+# Nested ESXi specific settings
+vcpu.hotadd = "FALSE"
+vpmc.enable = "FALSE"
